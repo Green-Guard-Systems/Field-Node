@@ -2,6 +2,7 @@
 #define ML_INFERENCE_H
 
 #include "esp_heap_caps.h"
+#include "data_packet.h"
 
 #define TFLM_USE_PSRAM
 #include <tflm_esp32.h>
@@ -23,7 +24,7 @@ extern const char* class_names[3];
 
 // Function declarations
 void init_tinyml();
-void run_inference();
+uint8_t run_inference();
 void emptyBuffer(int8_t* bufferName, size_t bufferSize);
 
 // ========== Implementation ==========
@@ -75,13 +76,13 @@ void init_tinyml() {
     Serial.println("✅ TinyML model initialized");
 }
 
-void run_inference() {
+uint8_t run_inference() {  // Changed return type from void to uint8_t
     Serial.println("\n🧠 Running inference...");
     
     if(!tf->predict(input_buffer).isOk()) {
         Serial.println("❌ Inference failed:");
         Serial.println(tf->exception.toString());
-        return;
+        return INVALID;  // Return INVALID on error
     }
     
     // Print results
@@ -109,6 +110,9 @@ void run_inference() {
     
     // Clear buffer
     emptyBuffer(input_buffer, TF_NUM_INPUTS*sizeof(int8_t));
+    
+    // Return the classification result
+    return (uint8_t)tf->classification;
 }
 
 void emptyBuffer(int8_t* bufferName, size_t bufferSize) {

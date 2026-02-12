@@ -7,6 +7,7 @@
 #include "camera_setup.h"
 #include "sd_card.h"
 #include "ml_inference.h"
+#include "data_packet.h"
 
 // Global variables
 extern int imageCount;
@@ -141,11 +142,28 @@ void process_image_and_classify() {
     // Release camera buffer
     esp_camera_fb_return(fb);
     
-    // Run inference
-    run_inference();
+    // Run inference and get classification
+    uint8_t health_class = run_inference();
+    
+    // Build data packet with ML result
+    data_packet = build_data_packet(health_class);
+    
+    // Display packet information
+    print_data_packet(data_packet);
+    print_packet_binary(data_packet);
+    
+    // Verify parity
+    if (verify_packet_parity(data_packet)) {
+        Serial.println("✅ Packet parity check PASSED");
+    } else {
+        Serial.println("❌ Packet parity check FAILED");
+    }
     
     // Increment counter
     imageCount++;
+    
+    // Now data_packet is ready to be sent to another module
+    // Example: send_to_other_module(data_packet);
 }
 
 bool is_system_ready() {

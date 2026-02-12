@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "camera_setup.h"
 #include "sd_card.h"
+#include "data_packet.h"
 #include "image_processing.h"
 #include "ml_inference.h"
 
@@ -13,6 +14,7 @@ void setup() {
     init_tinyml();
     init_camera();
     init_sd_card();
+    init_sensors();  // Initialize soil moisture and battery sensors
     
     Serial.println("\n✨ System ready!");
     Serial.println("📋 Press any key in Serial Monitor to capture and classify an image\n");
@@ -31,6 +33,13 @@ void loop() {
         
         if(is_system_ready()){
             process_image_and_classify();
+            
+            // The data_packet variable now contains the 32-bit data
+            // You can send it to another module here
+            // Example: LoRa.beginPacket();
+            //          LoRa.write((uint8_t*)&data_packet, 4);
+            //          LoRa.endPacket();
+            
             Serial.println("📋 Press any key to capture another image\n");
         } else {
             Serial.println("❌ Camera or SD card not ready");
