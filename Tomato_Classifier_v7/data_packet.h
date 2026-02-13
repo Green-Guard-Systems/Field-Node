@@ -2,14 +2,23 @@
 #define DATA_PACKET_H
 
 #include <Arduino.h>
+#include "Adafruit_seesaw.h"
+
+// Sensor objects
+Adafruit_seesaw ss;
 
 // Pin configuration for sensors
-#define SOIL_MOISTURE_PIN 2  // ADC pin for soil moisture sensor
 #define BATTERY_PIN 3        // ADC pin for battery voltage monitoring
+#define SEESAW_ADDR 0x36     // I2C address for Adafruit soil sensor
 
 // Node configuration (CHANGE THESE FOR EACH NODE)
-#define NODE_TYPE 0b010      // 3 bits: Node type (0-7)
+#define NODE_TYPE 0b001      // 3 bits: Node type (0-7)
 #define NODE_ID 0b00000001   // 8 bits: Node ID (0-255)
+
+// Soil moisture calibration values (adjust based on your sensor)
+// These are typical ranges for the Adafruit capacitive sensor
+#define SOIL_MIN 200    // Sensor reading in water (very wet)
+#define SOIL_MAX 2000   // Sensor reading in air (very dry)
 
 // Data packet bit positions
 #define NODE_TYPE_BITS    3   // Bits 0-2
@@ -28,6 +37,7 @@ enum HealthClass {
 
 // Global variables
 extern uint32_t data_packet;
+extern bool soil_sensor_available;
 
 // Function declarations
 void init_sensors();
@@ -37,16 +47,28 @@ uint8_t calculate_parity(uint32_t data);
 uint32_t build_data_packet(uint8_t health_class);
 void print_data_packet(uint32_t packet);
 void print_packet_binary(uint32_t packet);
+bool verify_packet_parity(uint32_t packet);
 
 // ========== Implementation ==========
 
 uint32_t data_packet = 0;
+bool soil_sensor_available = false;
 
 void init_sensors() {
     Serial.println("\n[Sensor Setup]");
     
-    // Configure ADC pins
-    pinMode(SOIL_MOISTURE_PIN, INPUT);
+    // Initialize Adafruit soil sensor
+    if (!ss.begin(SEESAW_ADDR)) {
+        Serial.println("⚠️  WARNING! Seesaw soil sensor not found");
+        Serial.println("   Soil moisture readings will default to 0");
+        soil_sensor_available = false;
+    } else {
+        Serial.print("✅ Seesaw soil sensor initialized! Version: 0x");
+        Serial.println(ss.getVersion(), HEX);
+        soil_sensor_available = true;
+    }
+    
+    // Configure battery monitoring ADC pin
     pinMode(BATTERY_PIN, INPUT);
     
     // ESP32-S3 ADC configuration
@@ -73,20 +95,26 @@ uint8_t read_battery_percentage() {
 }
 
 uint16_t read_soil_moisture() {
-    // Read soil moisture sensor
-    // Your sensor returns values between 200 (wet) and 2000 (dry)
+    // Read capacitive soil moisture from Adafruit sensor
     
-    int raw_value = analogRead(SOIL_MOISTURE_PIN);
+    if (!soil_sensor_available) {
+        Serial.println("⚠️  Soil sensor not available, returning minimum value");
+        return SOIL_MIN;
+    }
     
-    // Map 12-bit ADC (0-4095) to sensor range (200-2000)
-    // Adjust mapping based on your actual sensor calibration
-    uint16_t moisture = map(raw_value, 0, 4095, 200, 2000);
+    // Read capacitance value from sensor
+    uint16_t capread = ss.touchRead(0);
     
-    // Clamp to valid range
-    if (moisture < 200) moisture = 200;
-    if (moisture > 2000) moisture = 2000;
+    Serial.print("📊 Raw capacitance reading: ");
+    Serial.println(capread);
     
-    return moisture;
+    // Clamp to expected range (200-2000)
+    // Lower capacitance = drier soil
+    // Higher capacitance = wetter soil
+    if (capread < SOIL_MIN) capread = SOIL_MIN;
+    if (capread > SOIL_MAX) capread = SOIL_MAX;
+    
+    return capread;
 }
 
 uint8_t calculate_parity(uint32_t data) {
@@ -109,6 +137,10 @@ uint32_t build_data_packet(uint8_t health_class) {
     // Read sensor values
     uint8_t battery = read_battery_percentage();
     uint16_t soil = read_soil_moisture();
+    
+    Serial.println("\n[Building Data Packet]");
+    Serial.printf("  Battery: %d%%\n", battery);
+    Serial.printf("  Soil Moisture: %d\n", soil);
     
     // Build the packet bit by bit
     // Bits 0-2: Node Type (3 bits)
@@ -149,35 +181,35 @@ void print_data_packet(uint32_t packet) {
     uint8_t parity = (packet >> 31) & 0x01;
     
     // Print each field
-    Serial.printf("│ Node Type (0-2):      %d            │\n", node_type);
-    Serial.printf("│ Node ID (3-10):       %d            │\n", node_id);
-    Serial.print("│ Health (11-12):       ");
+    Serial.printf("│ Node Type (0-2):       %d            │\n", node_type);
+    Serial.printf("│ Node ID (3-10):        %d            │\n", node_id);
+    Serial.print("│ Health (11-12):        ");
     if (health == BACTERIAL) Serial.println("Bacterial    │");
     else if (health == HEALTHY) Serial.println("Healthy      │");
     else if (health == INVALID) Serial.println("Invalid      │");
-    else Serial.println("Unknown      │");
+    else Serial.println("Unknown     │");
     
-    Serial.printf("│ Battery (13-19):      %d%%           │\n", battery);
+    Serial.printf("│ Battery (13-19):       %d%%           │\n", battery);
     Serial.printf("│ Soil Moisture (20-30): %d          │\n", soil);
-    Serial.printf("│ Parity Bit (31):      %d            │\n", parity);
+    Serial.printf("│ Parity Bit (31):       %d            │\n", parity);
     Serial.println("├─────────────────────────────────────┤");
-    Serial.printf("│ Full Packet (hex):    0x%08X   │\n", packet);
-    Serial.printf("│ Full Packet (dec):    %u     │\n", packet);
+    Serial.printf("│ Full Packet (hex):     0x%08X   │\n", packet);
+    Serial.printf("│ Full Packet (dec):     %u    │\n", packet);
     Serial.println("└─────────────────────────────────────┘\n");
 }
 
 void print_packet_binary(uint32_t packet) {
-    Serial.println("\nBinary representation (MSB first):");
-    Serial.println(data_packet, BIN);
-    Serial.print("Bit 31 (Parity): ");
+    Serial.println("Binary representation (MSB first):");
+    Serial.print("Bit 31 (Parity):      ");
     for (int i = 31; i >= 31; i--) {
         Serial.print((packet >> i) & 1);
     }
     Serial.println();
     
-    Serial.print("Bits 20-30 (Soil): ");
+    Serial.print("Bits 20-30 (Soil):    ");
     for (int i = 30; i >= 20; i--) {
         Serial.print((packet >> i) & 1);
+        if (i == 25) Serial.print(" "); // Space for readability
     }
     Serial.println();
     
@@ -187,15 +219,16 @@ void print_packet_binary(uint32_t packet) {
     }
     Serial.println();
     
-    Serial.print("Bits 11-12 (Health): ");
+    Serial.print("Bits 11-12 (Health):  ");
     for (int i = 12; i >= 11; i--) {
         Serial.print((packet >> i) & 1);
     }
     Serial.println();
     
-    Serial.print("Bits 3-10 (Node ID): ");
+    Serial.print("Bits 3-10 (Node ID):  ");
     for (int i = 10; i >= 3; i--) {
         Serial.print((packet >> i) & 1);
+        if (i == 7) Serial.print(" "); // Space for readability
     }
     Serial.println();
     
