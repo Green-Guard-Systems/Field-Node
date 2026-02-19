@@ -3,6 +3,12 @@
 
 #include <Arduino.h>
 #include "Adafruit_seesaw.h"
+#include <HardwareSerial.h>
+
+// UART
+HardwareSerial espSerial(1);
+#define rxPin 44
+#define txPin 43
 
 // Sensor objects
 Adafruit_seesaw ss;
@@ -194,12 +200,13 @@ void print_data_packet(uint32_t packet) {
     Serial.printf("│ Parity Bit (31):       %d            │\n", parity);
     Serial.println("├─────────────────────────────────────┤");
     Serial.printf("│ Full Packet (hex):     0x%08X   │\n", packet);
-    Serial.printf("│ Full Packet (dec):     %u    │\n", packet);
+    Serial.printf("│ Full Packet (dec):     %u   │\n", packet);
     Serial.println("└─────────────────────────────────────┘\n");
 }
 
 void print_packet_binary(uint32_t packet) {
-    Serial.println("Binary representation (MSB first):");
+    Serial.print("Binary representation (MSB first): ");
+    Serial.println(packet, BIN);
     Serial.print("Bit 31 (Parity):      ");
     for (int i = 31; i >= 31; i--) {
         Serial.print((packet >> i) & 1);
@@ -237,6 +244,46 @@ void print_packet_binary(uint32_t packet) {
         Serial.print((packet >> i) & 1);
     }
     Serial.println("\n");
+}
+
+void send_data_packet(uint32_t packet) {
+    Serial.println("\n");
+    Serial.print("Full packet to send: 0x");
+    Serial.println(packet, HEX);
+    delay(2000);
+    
+    uint8_t byte0 = (uint8_t)(packet >> 24);
+    uint8_t byte1 = (uint8_t)(packet >> 16);
+    uint8_t byte2 = (uint8_t)(packet >> 8);
+    uint8_t byte3 = (uint8_t)(packet >> 0);
+    
+    Serial.print("Sending Byte 0 (MSB): 0x");
+    if(byte0 < 16) Serial.print("0");
+    Serial.println(byte0, HEX);
+    espSerial.write(byte0);
+    delay(2000);
+    
+    Serial.print("Sending Byte 1:       0x");
+    if(byte1 < 16) Serial.print("0");
+    Serial.println(byte1, HEX);
+    espSerial.write(byte1);
+    delay(2000);
+    
+    Serial.print("Sending Byte 2:       0x");
+    if(byte2 < 16) Serial.print("0");
+    Serial.println(byte2, HEX);
+    espSerial.write(byte2);
+    delay(2000);
+    
+    Serial.print("Sending Byte 3 (LSB): 0x");
+    if(byte3 < 16) Serial.print("0");
+    Serial.println(byte3, HEX);
+    espSerial.write(byte3);
+    delay(2000);
+
+    Serial.println("Full 32 bit packet sent!");
+    
+    Serial.println("-------------------");
 }
 
 // Utility function to verify parity

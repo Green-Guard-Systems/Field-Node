@@ -7,8 +7,9 @@
 
 void setup() {
     Serial.begin(115200);
+    espSerial.begin(9600, SERIAL_8N1, rxPin, txPin);
     delay(3000);
-    Serial.println("\n__Starting 🍅 Camera Classifier__");
+    Serial.println("\n__Starting Green🌱Guard Classifier__");
     
     // Initialize all systems
     init_tinyml();
@@ -33,12 +34,8 @@ void loop() {
         
         if(is_system_ready()){
             process_image_and_classify();
-            
             // The data_packet variable now contains the 32-bit data
-            // You can send it to another module here
-            // Example: LoRa.beginPacket();
-            //          LoRa.write((uint8_t*)&data_packet, 4);
-            //          LoRa.endPacket();
+            send_data_packet(data_packet); 
             
             Serial.println("📋 Press any key to capture another image\n");
         } else {
