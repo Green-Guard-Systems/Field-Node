@@ -17,6 +17,7 @@ bool sd_sign = false;
 
 void init_sd_card() {
     Serial.println("\n[SD Card Setup]");
+    Serial.println("SD Card initializing...");
     
     if(!SD.begin(21)){
         Serial.println("❌ SD Card mount failed");

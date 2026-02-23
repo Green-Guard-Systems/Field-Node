@@ -17,8 +17,8 @@ void setup() {
     init_sd_card();
     init_sensors();  // Initialize soil moisture and battery sensors
     
-    Serial.println("\n✨ System ready!");
-    Serial.println("📋 Press any key in Serial Monitor to capture and classify an image\n");
+    Serial.println("\n🌱System ready!");
+    Serial.println("📋Press any key in Serial Monitor to capture and classify an image...\n");
 }
 
 void loop() {

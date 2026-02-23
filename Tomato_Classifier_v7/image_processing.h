@@ -150,11 +150,11 @@ void process_image_and_classify() {
     
     // Display packet information
     print_data_packet(data_packet);
-    print_packet_binary(data_packet);
+    //print_packet_binary(data_packet);
     
     // Verify parity
     if (verify_packet_parity(data_packet)) {
-        Serial.println("✅ Packet parity check PASSED");
+        //Serial.println("✅ Packet parity check PASSED");
     } else {
         Serial.println("❌ Packet parity check FAILED");
     }

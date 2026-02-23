@@ -43,7 +43,7 @@ void init_tinyml() {
         while(1);
     }
     tf = new (tf_memory) EloquentTF();
-    Serial.println("✅ TF Object allocated in PSRAM");
+    Serial.println("TF Object allocated in PSRAM...");
 
     // Allocate input buffer in PSRAM
     input_buffer = (int8_t*)heap_caps_malloc(TF_NUM_INPUTS*sizeof(int8_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -51,7 +51,7 @@ void init_tinyml() {
         Serial.println("❌ Failed to allocate Input Buffer in PSRAM!");
         while(1);
     }
-    Serial.println("✅ Input Buffer allocated in PSRAM");
+    Serial.println("Input Buffer allocated in PSRAM...");
 
     // Configure model
     tf->setNumInputs(TF_NUM_INPUTS);

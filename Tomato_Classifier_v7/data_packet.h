@@ -18,7 +18,7 @@ Adafruit_seesaw ss;
 #define SEESAW_ADDR 0x36     // I2C address for Adafruit soil sensor
 
 // Node configuration (CHANGE THESE FOR EACH NODE)
-#define NODE_TYPE 0b001      // 3 bits: Node type (0-7)
+#define NODE_TYPE 0b010      // 3 bits: Node type (0-7)
 #define NODE_ID 0b00000001   // 8 bits: Node ID (0-255)
 
 // Soil moisture calibration values (adjust based on your sensor)
@@ -65,8 +65,8 @@ void init_sensors() {
     
     // Initialize Adafruit soil sensor
     if (!ss.begin(SEESAW_ADDR)) {
-        Serial.println("⚠️  WARNING! Seesaw soil sensor not found");
-        Serial.println("   Soil moisture readings will default to 0");
+        Serial.println("⚠️WARNING! Soil sensor not found...");
+        Serial.println("Soil moisture readings will default to 0...");
         soil_sensor_available = false;
     } else {
         Serial.print("✅ Seesaw soil sensor initialized! Version: 0x");
@@ -104,7 +104,7 @@ uint16_t read_soil_moisture() {
     // Read capacitive soil moisture from Adafruit sensor
     
     if (!soil_sensor_available) {
-        Serial.println("⚠️  Soil sensor not available, returning minimum value");
+        Serial.println("⚠️Soil sensor not available, returning minimum value");
         return SOIL_MIN;
     }
     
@@ -247,7 +247,7 @@ void print_packet_binary(uint32_t packet) {
 }
 
 void send_data_packet(uint32_t packet) {
-    Serial.println("\n");
+    Serial.println("[Sending Data Packet]");
     Serial.print("Full packet to send: 0x");
     Serial.println(packet, HEX);
     delay(2000);
@@ -261,25 +261,25 @@ void send_data_packet(uint32_t packet) {
     if(byte0 < 16) Serial.print("0");
     Serial.println(byte0, HEX);
     espSerial.write(byte0);
-    delay(2000);
+    //delay(2000);
     
     Serial.print("Sending Byte 1:       0x");
     if(byte1 < 16) Serial.print("0");
     Serial.println(byte1, HEX);
     espSerial.write(byte1);
-    delay(2000);
+    //delay(2000);
     
     Serial.print("Sending Byte 2:       0x");
     if(byte2 < 16) Serial.print("0");
     Serial.println(byte2, HEX);
     espSerial.write(byte2);
-    delay(2000);
+    //delay(2000);
     
     Serial.print("Sending Byte 3 (LSB): 0x");
     if(byte3 < 16) Serial.print("0");
     Serial.println(byte3, HEX);
     espSerial.write(byte3);
-    delay(2000);
+    //delay(2000);
 
     Serial.println("Full 32 bit packet sent!");
     

@@ -18,6 +18,7 @@ bool camera_sign = false;
 
 void init_camera() {
     Serial.println("\n[Camera Setup]");
+    Serial.println("Camera initializing...");
     
     camera_config_t config;
     config.ledc_channel = LEDC_CHANNEL_0;
