@@ -4,42 +4,45 @@
 #include "data_packet.h"
 #include "image_processing.h"
 #include "ml_inference.h"
+#include "sleep_mode.h"
 
 void setup() {
     Serial.begin(115200);
-    espSerial.begin(9600, SERIAL_8N1, rxPin, txPin);
-    delay(3000);
-    Serial.println("\n__Starting Green🌱Guard Classifier__");
+    delay(1000);
+
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
     
-    // Initialize all systems
-    init_tinyml();
-    init_camera();
-    init_sd_card();
-    init_sensors();  // Initialize soil moisture and battery sensors
+    // If this is the first boot, go straight to sleep
+    if (wakeup_reason == 0) {
+        Serial.println("First boot - entering deep sleep");
+        enter_sleep_mode();
+    }
+
+    // Initialize if woken up by GPIO trigger
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+        espSerial.begin(9600, SERIAL_8N1, rxPin, txPin);
+        Serial.println("\n__Starting Green🌱Guard Classifier__");
     
-    Serial.println("\n🌱System ready!");
-    Serial.println("📋Press any key in Serial Monitor to capture and classify an image...\n");
+        // Initialize all systems
+        init_tinyml();
+        init_camera();
+        init_sd_card();
+        init_sensors();  // Initialize soil moisture and battery sensors
+        
+        Serial.println("\n🌱System ready!");
+    }
 }
 
 void loop() {
-    // Check if data is available in the serial buffer
-    if (Serial.available() > 0) {
-        // Read and discard the character
-        Serial.read();
-        
-        // Clear any remaining characters in the buffer
-        while(Serial.available() > 0) {
-            Serial.read();
-        }
-        
-        if(is_system_ready()){
-            process_image_and_classify();
-            // The data_packet variable now contains the 32-bit data
-            send_data_packet(data_packet); 
-            
-            Serial.println("📋 Press any key to capture another image\n");
-        } else {
-            Serial.println("❌ Camera or SD card not ready");
-        }
+    if(is_system_ready()){
+        process_image_and_classify();
+        // The data_packet variable now contains the 32-bit data
+        send_data_packet(data_packet);
+        delay(1000);
+        // Enter deep sleep after sending data packet
+        enter_sleep_mode(); 
+    } else {
+        Serial.println("❌Camera or SD card not ready, sleep mode not entered");
+        delay(5000); // Wait before retrying
     }
 }
