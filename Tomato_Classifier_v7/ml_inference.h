@@ -7,12 +7,12 @@
 #define TFLM_USE_PSRAM
 #include <tflm_esp32.h>
 #include <eloquent_tinyml.h>
-#include "classifier_96_int8f.h"
+#include "classifier_320_int8f.h"
 
 // TinyML Configuration
 #define ARENA_SIZE      2 * 1024 * 1024
 #define TF_NUM_OPS      10
-#define TF_NUM_INPUTS   27648 //96*96*3
+#define TF_NUM_INPUTS   307200 //320*320*3
 #define TF_NUM_OUTPUTS  3
 
 using EloquentTF = Eloquent::TF::Sequential<TF_NUM_OPS, ARENA_SIZE>;

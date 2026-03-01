@@ -23,8 +23,8 @@ bool is_system_ready();
 int imageCount = 1;
 
 void save_rgb565_as_bmp(camera_fb_t *fb, const char *path) {
-    const int width = 96;
-    const int height = 96;
+    const int width = 320;
+    const int height = 320;
     const int row_size = ((width * 3 + 3) / 4) * 4;
     const int pixel_array_size = row_size * height;
     const int file_size = 54 + pixel_array_size;
@@ -90,8 +90,8 @@ void save_rgb565_as_bmp(camera_fb_t *fb, const char *path) {
 }
 
 void prepare_model_input(camera_fb_t *fb, int8_t* buffer) {
-    const int width = 96;
-    const int height = 96;
+    const int width = 320;
+    const int height = 320;
     
     Serial.println("Preparing image for model...");
     

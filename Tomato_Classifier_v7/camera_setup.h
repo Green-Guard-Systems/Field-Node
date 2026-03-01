@@ -40,7 +40,7 @@ void init_camera() {
     config.pin_pwdn = PWDN_GPIO_NUM;
     config.pin_reset = RESET_GPIO_NUM;
     config.xclk_freq_hz = 20000000;
-    config.frame_size = FRAMESIZE_96X96;
+    config.frame_size = FRAMESIZE_320X320;
     config.pixel_format = PIXFORMAT_RGB565;
     config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
     config.fb_location = CAMERA_FB_IN_PSRAM;
