@@ -17,6 +17,9 @@ void setup() {
         Serial.println("First boot - entering deep sleep");
         enter_sleep_mode();
     }
+    
+
+    BANANBASNBASNBANSBANSBNASBNSb
 
     // Initialize if woken up by GPIO trigger
     if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
