@@ -19,8 +19,6 @@ void setup() {
     }
     
 
-    BANANBASNBASNBANSBANSBNASBNSb
-
     // Initialize if woken up by GPIO trigger
     if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
         espSerial.begin(9600, SERIAL_8N1, rxPin, txPin);
