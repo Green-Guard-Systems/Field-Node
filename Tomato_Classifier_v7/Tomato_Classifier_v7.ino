@@ -12,37 +12,47 @@ void setup() {
 
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
     
-    // If this is the first boot, go straight to sleep
-    if (wakeup_reason == 0) {
-        Serial.println("First boot - entering deep sleep");
-        enter_sleep_mode();
+    // Print wakeup reason for debugging
+    switch(wakeup_reason) {
+        case ESP_SLEEP_WAKEUP_TIMER:
+            Serial.println("Woke up from timer");
+            break;
+        case ESP_SLEEP_WAKEUP_EXT0:
+            Serial.println("Woke up from GPIO");
+            break;
+        default:
+            Serial.println("First boot or other wakeup reason");
+            break;
     }
 
-    // Initialize if woken up by GPIO trigger
-    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
-        espSerial.begin(9600, SERIAL_8N1, rxPin, txPin);
-        Serial.println("\n__Starting Green🌱Guard Classifier__");
+    // Initialize on every wakeup
+    espSerial.begin(9600, SERIAL_8N1, rxPin, txPin);
+    Serial.println("\n__Starting Green🌱Guard Classifier__");
+
+    // Initialize all systems
+    init_tinyml();
+    init_camera();
+    init_sd_card();
+    init_sensors();  // Initialize soil moisture and battery sensors
     
-        // Initialize all systems
-        init_tinyml();
-        init_camera();
-        init_sd_card();
-        init_sensors();  // Initialize soil moisture and battery sensors
-        
-        Serial.println("\n🌱System ready!");
-    }
+    Serial.println("\n🌱System ready!");
 }
 
 void loop() {
     if(is_system_ready()){
+        // Process image and classify
         process_image_and_classify();
-        // The data_packet variable now contains the 32-bit data
+        
+        // Send the data packet
         send_data_packet(data_packet);
-        delay(1000);
-        // Enter deep sleep after sending data packet
-        enter_sleep_mode(); 
+        
+        Serial.println("✅ Task complete, entering sleep...");
+        
+        // Enter deep sleep for 30 seconds
+        enter_sleep_mode();
     } else {
-        Serial.println("❌Camera or SD card not ready, sleep mode not entered");
-        delay(5000); // Wait before retrying
+        Serial.println("❌Camera or SD card not ready, retrying in 30s");
+        // Still enter sleep mode even if not ready
+        enter_sleep_mode(); 
     }
 }
