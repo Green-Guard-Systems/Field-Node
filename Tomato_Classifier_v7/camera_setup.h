@@ -10,11 +10,31 @@
 extern bool camera_sign;
 
 // Function declarations
+void camera_power_up();
+void camera_power_down();
 void init_camera();
 
 // ========== Implementation ==========
-
 bool camera_sign = false;
+bool camera_on = false;
+
+// Take camera out of standy mode
+void camera_power_up(){
+    if(camera_on == false){
+        sensor_t* sensor = esp_camera_sensor_get();
+        sensor->set_reg(sensor,0x3008,0x40,false ? 0x40 : 0x00);
+        camera_on = true;
+    }
+}
+
+// Put camera into standy mode
+void camera_power_down() {
+    if(camera_on == true){
+    sensor_t* sensor = esp_camera_sensor_get();
+    sensor->set_reg(sensor,0x3008,0x40,true ? 0x40 : 0x00);
+    camera_on = false;
+    }
+}
 
 void init_camera() {
     Serial.println("\n[Camera Setup]");

@@ -24,6 +24,7 @@ extern const char* class_names[3];
 
 // Function declarations
 void init_tinyml();
+void deinit_tinyml();
 uint8_t run_inference();
 void emptyBuffer(int8_t* bufferName, size_t bufferSize);
 
@@ -119,6 +120,27 @@ void emptyBuffer(int8_t* bufferName, size_t bufferSize) {
     if (bufferName != NULL) {
         memset(bufferName, 0, bufferSize);
     }
+}
+
+void deinit_tinyml() {
+    Serial.println("\n[TinyML Cleanup]");
+    
+    // 1. Explicitly call destructor (since we used placement new)
+    if (tf != nullptr) {
+        tf->~EloquentTF();  // Call destructor
+        heap_caps_free(tf); // Free PSRAM memory
+        tf = nullptr;
+        Serial.println("✅ TF object freed from PSRAM");
+    }
+    
+    // 2. Free input buffer
+    if (input_buffer != nullptr) {
+        heap_caps_free(input_buffer);
+        input_buffer = nullptr;
+        Serial.println("✅ Input buffer freed from PSRAM");
+    }
+    
+    Serial.println("TinyML deinitialized");
 }
 
 #endif // ML_INFERENCE_H

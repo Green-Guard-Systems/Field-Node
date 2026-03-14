@@ -34,6 +34,9 @@ void setup() {
     init_camera();
     init_sd_card();
     init_sensors();  // Initialize soil moisture and battery sensors
+
+    // Make sure camera isn't in standy mode
+    camera_power_up();
     
     Serial.println("\n🌱System ready!");
 }
@@ -48,7 +51,7 @@ void loop() {
         
         Serial.println("✅ Task complete, entering sleep...");
         
-        // Enter deep sleep for 30 seconds
+        // Enter deep sleep for 10 seconds
         enter_sleep_mode();
     } else {
         Serial.println("❌Camera or SD card not ready, retrying in 30s");

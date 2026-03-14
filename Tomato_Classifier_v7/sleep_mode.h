@@ -2,27 +2,34 @@
 #define SLEEP_MODE_H
 
 #include "driver/rtc_io.h"
+#include "ml_inference.h"
+#include <WiFi.h>
+#include "esp_wifi.h"
+#include "esp_bt.h"
+#include <Wire.h>
 
-#define WAKEUP_GPIO GPIO_NUM_1
-#define SLEEP_DURATION_SECONDS 30
+#define SLEEP_DURATION_SECONDS 10
 
 void enter_sleep_mode() {
-    // Deinitialize peripherals to save power
-    SD.end();
-    esp_camera_deinit();
 
-    // Configure timer wakeup for 30 seconds
+    // === CAMERA SHUTDOWN ===
+    camera_power_down();
+    esp_camera_deinit();
+    
+    // === OTHER PERIPHERALS ===
+    SD.end();
+    deinit_tinyml();
+
+    // === SM SENSOR GPIO ISOLATION ===
+    rtc_gpio_isolate(GPIO_NUM_5);
+    rtc_gpio_isolate(GPIO_NUM_6);
+
+    // === TIMER WAKEUP ===
     uint64_t sleep_duration_us = SLEEP_DURATION_SECONDS * 1000000ULL;
     esp_sleep_enable_timer_wakeup(sleep_duration_us);
 
-    // Optional: Keep GPIO wakeup as a manual override
-    // Comment out these lines if you don't want manual wakeup
-    esp_sleep_enable_ext0_wakeup(WAKEUP_GPIO, 1);
-    rtc_gpio_pullup_dis(WAKEUP_GPIO);
-    rtc_gpio_pulldown_en(WAKEUP_GPIO);
-
     Serial.printf("Entering deep sleep for %d seconds...\n", SLEEP_DURATION_SECONDS);
-    delay(100); // Give serial time to finish
+    Serial.flush();
 
     esp_deep_sleep_start();
 }
