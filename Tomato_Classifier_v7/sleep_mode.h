@@ -21,8 +21,8 @@ void enter_sleep_mode() {
     deinit_tinyml();
 
     // === SM SENSOR GPIO ISOLATION ===
-    rtc_gpio_isolate(GPIO_NUM_5);
-    rtc_gpio_isolate(GPIO_NUM_6);
+    //rtc_gpio_isolate(GPIO_NUM_5);
+    //rtc_gpio_isolate(GPIO_NUM_6);
 
     // === TIMER WAKEUP ===
     uint64_t sleep_duration_us = SLEEP_DURATION_SECONDS * 1000000ULL;

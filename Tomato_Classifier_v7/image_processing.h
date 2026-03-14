@@ -17,10 +17,46 @@ void save_rgb565_as_bmp(camera_fb_t *fb, const char *path);
 void prepare_model_input(camera_fb_t *fb, int8_t* buffer);
 void process_image_and_classify();
 bool is_system_ready();
+int readImageCounter();
+void writeImageCounter(int counter);
+void initImageCounter();
 
 // ========== Implementation ==========
 
-int imageCount = 1;
+int imageCount = 0;  // Will be loaded from SD card
+
+// Read counter from SD card
+int readImageCounter() {
+    File file = SD.open("/counter.txt", FILE_READ);
+    if (!file) {
+        Serial.println("Counter file not found, starting at 1");
+        return 1;  // Start at 1 if file doesn't exist
+    }
+    
+    int counter = file.parseInt();
+    file.close();
+    
+    Serial.printf("📊 Counter loaded: %d\n", counter);
+    return counter;
+}
+
+// Write counter to SD card
+void writeImageCounter(int counter) {
+    File file = SD.open("/counter.txt", FILE_WRITE);
+    if (!file) {
+        Serial.println("❌ Failed to write counter file");
+        return;
+    }
+    
+    file.print(counter);
+    file.close();
+    Serial.printf("💾 Counter saved: %d\n", counter);
+}
+
+// Initialize counter from SD card (call this in your setup())
+void initImageCounter() {
+    imageCount = readImageCounter();
+}
 
 void save_rgb565_as_bmp(camera_fb_t *fb, const char *path) {
     const int width = 320;
@@ -159,8 +195,9 @@ void process_image_and_classify() {
         Serial.println("❌ Packet parity check FAILED");
     }
     
-    // Increment counter
+    // Increment counter and save to SD card
     imageCount++;
+    writeImageCounter(imageCount);
     
     // Now data_packet is ready to be sent to another module
     // Example: send_to_other_module(data_packet);

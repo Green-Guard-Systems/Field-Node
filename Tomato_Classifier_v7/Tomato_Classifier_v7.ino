@@ -33,10 +33,13 @@ void setup() {
     init_tinyml();
     init_camera();
     init_sd_card();
+    initImageCounter();
     init_sensors();  // Initialize soil moisture and battery sensors
 
-    // Make sure camera isn't in standy mode
+    // Make sure camera isn't in standy mode and GPIO's wake back up
     camera_power_up();
+    //rtc_gpio_deinit(GPIO_NUM_5);
+    //rtc_gpio_deinit(GPIO_NUM_6);
     
     Serial.println("\n🌱System ready!");
 }

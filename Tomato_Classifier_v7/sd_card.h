@@ -12,7 +12,6 @@ extern bool sd_sign;
 void init_sd_card();
 
 // ========== Implementation ==========
-
 bool sd_sign = false;
 
 void init_sd_card() {
